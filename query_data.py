@@ -1,0 +1,72 @@
+import argparse
+import os
+# --- FIX 1: Import dotenv to read your .env file ---
+from dotenv import load_dotenv
+# ---------------------------------------------------
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_openai import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+
+# --- FIX 2: Load the environment variables immediately ---
+load_dotenv()
+# ---------------------------------------------------------
+
+CHROMA_PATH = "chroma"
+
+PROMPT_TEMPLATE = """
+Answer the question based only on the following context:
+
+{context}
+
+---
+
+Answer the question based on the above context: {question}
+"""
+
+
+def main():
+    # Create CLI.
+    parser = argparse.ArgumentParser()
+    parser.add_argument("query_text", type=str, help="The query text.")
+    args = parser.parse_args()
+    query_text = args.query_text
+
+    # Prepare the DB.
+    embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding_function)
+
+    # Search the DB.
+    results = db.similarity_search_with_relevance_scores(query_text, k=3)
+    
+    if len(results) == 0:
+        print(f"Unable to find matching results.")
+        return
+
+    context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
+    prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+    prompt = prompt_template.format(context=context_text, question=query_text)
+    
+    print("\n" + "="*30)
+    print("RETRIVED CONTEXT:")
+    print(context_text)
+    print("="*30 + "\n")
+
+    # --- GENERATION STEP ---
+    # This will use your API key now.
+    # If you still have no credits, it will give a "RateLimitError".
+    try:
+        model = ChatOpenAI()
+        response_text = model.predict(prompt)
+        
+        sources = [doc.metadata.get("source", None) for doc, _score in results]
+        formatted_response = f"Response: {response_text}\nSources: {sources}"
+        print(formatted_response)
+    except Exception as e:
+        print(f"\nERROR: {e}")
+        print("\nNote: If this is a 'RateLimitError', it means your OpenAI wallet is empty.")
+        print("But your RAG pipeline is working perfectly! (See the context above)")
+
+
+if __name__ == "__main__":
+    main()

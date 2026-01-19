@@ -1,0 +1,54 @@
+# RAG Project Dev Log: Windows & LangChain (Python 3.11)
+# Date: January 2026
+
+## 1. Project Goal
+Build a Retrieval-Augmented Generation (RAG) pipeline to chat with a Markdown book ("Alice in Wonderland") using LangChain and ChromaDB on Windows.
+
+## 2. Environment Setup
+* **Python Version:** Python 3.11 (Required to avoid 3.12+ compatibility issues).
+* **Virtual Environment:** Created `env` to isolate dependencies.
+* **OS:** Windows (PowerShell).
+
+## 3. Errors Faced & Fixes
+
+### Error A: NLTK Data Missing
+* **Issue:** `unstructured` library crashed because it couldn't find tokenizers.
+* **Fix:** Manually ran a Python script to download `punkt`, `punkt_tab`, and `averaged_perceptron_tagger`.
+
+### Error B: "Client.__init__() got an unexpected keyword argument 'proxies'"
+* **Issue:** Version conflict between `openai` (v1.30.5) and `httpx` (v0.28.0+). The new `httpx` removed support for proxies in the way the old OpenAI SDK expected.
+* **Fix:** Downgraded `httpx` to restore compatibility.
+    * Command: `pip install "httpx<0.28.0"`
+
+### Error C: "Quota Exceeded / RateLimitError" (429)
+* **Issue:** The OpenAI account had no credit balance (empty wallet), so API calls failed.
+* **Fix:** Switched the **Embedding** step (converting text to numbers) from OpenAI to a free, local model.
+    * Installed: `pip install sentence-transformers`
+    * Code Change: Replaced `OpenAIEmbeddings()` with `HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")`.
+
+### Error D: Query Script Crash (Embedding Mismatch)
+* **Issue:** `create_database.py` used HuggingFace embeddings, but `query_data.py` was still trying to use OpenAI embeddings. You cannot search a database with a different "language" than it was built with.
+* **Fix:** Updated `query_data.py` to use `HuggingFaceEmbeddings` so it matches the database.
+
+### Error E: "Did not find openai_api_key" in Query Script
+* **Issue:** `query_data.py` was missing the `load_dotenv()` setup to read the API key from the `.env` file.
+* **Fix:** Added `from dotenv import load_dotenv` and `load_dotenv()` to the top of the script.
+
+## 4. Current Status
+* **Database:** Successfully built (`chroma/` folder created) using free local embeddings.
+* **Retrieval:** Working! The script successfully finds relevant paragraphs from "Alice in Wonderland".
+* **Generation:** Currently FAILS because it still attempts to use OpenAI (`ChatOpenAI`) to write the final answer, and the wallet is empty.
+
+## 5. Next Steps (Goal: 100% Free RAG)
+You currently have a "Hybrid" setup (Free Search + Paid Chat). You want to make the Chat free too.
+
+1.  **Install Ollama:**
+    * Download from ollama.com.
+    * Pull a model (e.g., `ollama pull mistral` or `llama3`).
+2.  **Update Python Dependencies:**
+    * `pip install langchain-community` (ensure it's up to date).
+3.  **Modify `query_data.py`:**
+    * Replace `from langchain_openai import ChatOpenAI` with `from langchain_community.chat_models import ChatOllama`.
+    * Replace `model = ChatOpenAI()` with `model = ChatOllama(model="mistral")`.
+
+This will allow the entire pipeline to run offline on your laptop for $0.
