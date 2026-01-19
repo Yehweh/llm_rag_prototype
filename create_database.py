@@ -1,24 +1,19 @@
-# from langchain.document_loaders import DirectoryLoader
+
 from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
-# --- CHANGE 1: Switch Import ---
-# from langchain_openai import OpenAIEmbeddings
+
 from langchain_community.embeddings import HuggingFaceEmbeddings
-# -------------------------------
+
 from langchain_community.vectorstores import Chroma
 import openai 
 from dotenv import load_dotenv
 import os
 import shutil
 
-# Load environment variables. Assumes that project contains .env file with API keys
-load_dotenv()
-#---- Set OpenAI API key 
-# Change environment variable name from "OPENAI_API_KEY" to the name given in 
-# your .env file.
-if 'OPENAI_API_KEY' in os.environ:
-    openai.api_key = os.environ['OPENAI_API_KEY']
+
+
+
 
 CHROMA_PATH = "chroma"
 DATA_PATH = "data/books"
@@ -59,12 +54,11 @@ def split_text(documents: list[Document]):
 
 
 def save_to_chroma(chunks: list[Document]):
-    # Clear out the database first.
+   
     if os.path.exists(CHROMA_PATH):
         shutil.rmtree(CHROMA_PATH)
 
-    # Create a new DB from the documents.
-    # --- CHANGE 2: Use Local Embeddings instead of OpenAI ---
+    
     db = Chroma.from_documents(
         chunks, 
         HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"), 

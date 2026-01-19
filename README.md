@@ -1,47 +1,61 @@
-# Langchain RAG Tutorial
+# LLM-based RAG Prototype
 
-## Install dependencies
+This repository contains a simple end-to-end **Retrieval-Augmented Generation (RAG)** prototype built to understand how document-based question answering systems work using Large Language Models.
 
-1. Do the following before installing the dependencies found in `requirements.txt` file because of current challenges installing `onnxruntime` through `pip install onnxruntime`. 
+The focus of this project is **learning and system understanding**, not production-scale optimization.
 
-    - For MacOS users, a workaround is to first install `onnxruntime` dependency for `chromadb` using:
+---
 
-    ```python
-     conda install onnxruntime -c conda-forge
-    ```
-    See this [thread](https://github.com/microsoft/onnxruntime/issues/11037) for additonal help if needed. 
+## What this project does
 
-     - For Windows users, follow the guide [here](https://github.com/bycloudai/InstallVSBuildToolsWindows?tab=readme-ov-file) to install the Microsoft C++ Build Tools. Be sure to follow through to the last step to set the enviroment variable path.
+- Ingests documents and splits them into chunks  
+- Creates vector embeddings for efficient retrieval  
+- Retrieves relevant context based on a user query  
+- Passes retrieved context to an LLM to generate answers  
 
+This helps reduce hallucinations by grounding responses in source documents.
 
-2. Now run this command to install dependenies in the `requirements.txt` file. 
+---
 
-```python
-pip install -r requirements.txt
-```
+## Why this project exists
 
-3. Install markdown depenendies with: 
+This project was built as a **learning prototype** to:
+- Understand the full RAG pipeline end-to-end  
+- Explore prompt structuring and context injection  
+- Learn trade-offs related to context size, latency, and response quality  
 
-```python
-pip install "unstructured[md]"
-```
+It is **not intended to be production-ready**.
 
-## Create database
+---
 
-Create the Chroma DB.
+## Project structure
 
-```python
+create_database.py # Ingests documents and builds the vector store
+query_data.py # Queries the vector store and generates responses
+compare_embeddings.py # (Optional) Used to experiment with embeddings
+requirements.txt
+README.md
+
+## How to run locally
+
+1. Create and activate a virtual environment  
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+
+Run the database creation script:
+
 python create_database.py
-```
 
-## Query the database
 
-Query the Chroma DB.
+Query the system:
 
-```python
-python query_data.py "How does Alice meet the Mad Hatter?"
-```
+python query_data.py
 
-> You'll also need to set up an OpenAI account (and set the OpenAI key in your environment variable) for this to work.
+Current status
 
-Here is a step-by-step tutorial video: [RAG+Langchain Python Project: Easy AI/Chat For Your Docs](https://www.youtube.com/watch?v=tcqEUSNCn8I&ab_channel=pixegami).
+Early-stage prototype
+
+Built for experimentation and learning
+
+Actively open to improvements and refactoring

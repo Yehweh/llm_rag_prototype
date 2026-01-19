@@ -1,16 +1,16 @@
 import argparse
 import os
-# --- FIX 1: Import dotenv to read your .env file ---
+
 from dotenv import load_dotenv
-# ---------------------------------------------------
+
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 
-# --- FIX 2: Load the environment variables immediately ---
+
 load_dotenv()
-# ---------------------------------------------------------
+
 
 CHROMA_PATH = "chroma"
 
@@ -26,17 +26,15 @@ Answer the question based on the above context: {question}
 
 
 def main():
-    # Create CLI.
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("query_text", type=str, help="The query text.")
     args = parser.parse_args()
     query_text = args.query_text
-
-    # Prepare the DB.
     embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding_function)
 
-    # Search the DB.
+    
     results = db.similarity_search_with_relevance_scores(query_text, k=3)
     
     if len(results) == 0:
@@ -52,9 +50,7 @@ def main():
     print(context_text)
     print("="*30 + "\n")
 
-    # --- GENERATION STEP ---
-    # This will use your API key now.
-    # If you still have no credits, it will give a "RateLimitError".
+    
     try:
         model = ChatOpenAI()
         response_text = model.predict(prompt)
